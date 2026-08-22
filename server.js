@@ -1,4 +1,5 @@
-import db from './db.js';
+import db from './src/config/db.js';
+import router from './src/routes/tasks.routes.js';
 import express from 'express';
 
 const app = express();
@@ -7,21 +8,12 @@ const PORT = 3000;
 //Parse JSON bodies (as sent by API clients) -> instead of using data/end chunk-collecting
 app.use(express.json());
 
-//Get all tasks
-app.get('/api/tasks', async (req, res) => {
-   try {
-    const tasks = await db.query('SELECT * FROM tasks ORDER BY id');
-    res.status(200).json(tasks.rows);
-   } catch (err){
-    console.error(err);
-    res.status(500).json({error: 'Server error occured while fetching data.'});
-   }
-})
+app.use('/api/tasks', router)
 
 app.get('/api/tasks/:id', async (req,res) => {
     try{
         const { id } = req.params;
-        console.log(userId)
+        console.log(id)
         const query = 'SELECT * from tasks WHERE id = $1';
         const result = await db.query(query, [id]);
 
