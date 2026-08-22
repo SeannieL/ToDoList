@@ -99,6 +99,29 @@ app.patch('/api/tasks/:id', async (req, res) => {
     }
 })
 
+app.post('/api/tasks', async (req, res) => {
+    const { title } = req.body;
+
+    if(!title){
+        return res.status(400).json({ error: 'Task name is required' });
+    }
+
+    try {
+        const query = 'INSERT INTO tasks (title) VALUES ($1) RETURNING *';
+        const values = [title];
+
+        const result = await db.query(query, values);
+
+        res.status(201).json({
+            message: 'Task created successfully',
+            task: result.rows[0],
+        })
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Server error occurred while inserting data' });
+    }
+})
+
 app.listen(PORT, function (err){
     if (err) console.log(err);
     console.log("Server listening on PORT", PORT);
