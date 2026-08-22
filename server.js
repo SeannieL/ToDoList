@@ -10,7 +10,7 @@ app.use(express.json());
 //Get all tasks
 app.get('/api/tasks', async (req, res) => {
    try {
-    const tasks = await db.query('SELECT * FROM tasks');
+    const tasks = await db.query('SELECT * FROM tasks ORDER BY id');
     res.status(200).json(tasks.rows);
    } catch (err){
     console.error(err);
@@ -25,8 +25,8 @@ app.get('/api/tasks/:id', async (req,res) => {
         const query = 'SELECT * from tasks WHERE id = $1';
         const result = await db.query(query, [id]);
 
-        if(result.rows.length === 0){
-            return res.status(404).json({error: 'User not found'});
+        if(result.rowCount === 0){
+            return res.status(404).json({error: 'Task not found'});
         }
         res.json(result.rows[0]);
     } catch (err) {
@@ -44,12 +44,58 @@ app.delete('/api/tasks/:id', async (req,res) => {
         const result = await db.query(query, [id]);
         
         if(result.rowCount === 0){
-            return res.status(404).json({ message : 'User not found'});
+            return res.status(404).json({ message : 'Task not found'});
         }
 
-        res.status(200).json({ message: 'User successfully deleted'})
+        res.status(200).json({ message: 'Task successfully deleted'})
     } catch (error){
         res.status(500).json({ error: 'Internal Server Error'});
+    }
+})
+
+app.patch('/api/tasks/:id', async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const allowedColumns = ['title','is_done']
+
+    //Returns array of keys of object
+    const keys = Object.keys(updates); 
+
+    if(keys.length === 0 ){
+        return res.status(400).json({ error: 'No fields provided for update.'});
+    }
+
+    if (!keys.every(key => allowedColumns.includes(key))) {
+        return res.status(400).json({ error: 'Invalid field provided' });
+    }
+
+    try{
+        //Returns Key with updates index for DB query Eg. "name" = $1 
+        const setClause = keys.map((key, index) => `"${key}" = $${index + 1}`).join(',');
+
+        //Returns query values array
+        const queryValues = Object.values(updates);
+
+        //Last position is the id
+        queryValues.push(id);
+
+        const idParamIndex = queryValues.length;
+
+        const query = `UPDATE tasks SET ${setClause} WHERE id = $${idParamIndex} RETURNING *`;
+
+        const result = await db.query(query, queryValues);
+
+        if (result.rowCount === 0 ){
+            return res.status(404).json({ error: 'Task not found.'});
+        }
+
+        res.status(200).json(result.rows[0]);
+
+    } catch (error) {
+
+        console.error('Database error:', error);
+        return res.status(500).json({ error: 'Internal server error.' });
     }
 })
 
