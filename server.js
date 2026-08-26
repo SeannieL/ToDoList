@@ -1,4 +1,5 @@
-import router from './src/routes/tasks.routes.js';
+import taskRouter from './src/routes/tasks.routes.js'; 
+import authRouter from './src/routes/auth.routes.js';
 import express from 'express';
 import cors from 'cors';
 
@@ -18,7 +19,8 @@ app.use(cors(corsOptions));
 //Parse JSON bodies (as sent by API clients) -> instead of using data/end chunk-collecting
 app.use(express.json());
 
-app.use('/api/tasks', router)
+app.use('/api/tasks', taskRouter)
+app.use('/api/auth', authRouter)
 
 app.listen(PORT, function (err){
     if (err) console.log(err);
