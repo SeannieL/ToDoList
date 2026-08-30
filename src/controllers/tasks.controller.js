@@ -4,7 +4,7 @@ import { getAllTasks, getTaskById, createTask, updateTask, deleteTask } from "..
 
 export async function getAllTasksHandler(req, res){
     try{
-        const result =  await getAllTasks();
+        const result = await getAllTasks(req.user.userId);
         res.status(200).json(result);
     } catch (err) {
         console.log(err.message);
@@ -15,8 +15,8 @@ export async function getAllTasksHandler(req, res){
 export async function getTaskByIdHandler(req, res){
     try{
         const { id } = req.params;
-        const result = await getTaskById(id);
-         if(result.rowCount === 0){
+        const result = await getTaskById(id, req.user.userId);
+        if(!result){
             return res.status(404).json({error: 'Task not found'});
         }
         res.json(result);
@@ -34,7 +34,7 @@ export async function createTaskHandler(req, res){
     }
 
     try{
-        const result = await createTask(title);
+        const result = await createTask(title, req.user.userId);
         res.status(201).json({
             message: 'Task created successfully',
             task : result
@@ -49,8 +49,8 @@ export async function deleteTaskHandler(req, res){
     const { id } = req.params;
 
     try{
-        const result = await deleteTask(id);
-        if(result.rowCount === 0){
+        const result = await deleteTask(id, req.user.userId);
+        if(!result){
             return res.status(404).json({ message : 'Task not found'});
         }
 
@@ -69,15 +69,13 @@ export async function updateTaskHandler(req, res){
     }
 
     try{
-        const result = await updateTask(id, updates);
-
-         if (result.rowCount === 0 ){
+        const result = await updateTask(id, updates, req.user.userId);
+        if(!result){
             return res.status(404).json({ error: 'Task not found.'});
         }
 
         res.status(200).json(result);
     }catch (error) {
-
         console.error('Database error:', error);
         return res.status(500).json({ error: 'Internal server error.' });
     }

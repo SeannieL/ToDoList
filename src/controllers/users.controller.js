@@ -48,6 +48,7 @@ export async function loginUser(req, res) {
         }
 
         // password correct → issue token (minimal payload, env secret)
+        //This will be in req.user when doing jwt.verify
         const token = jwt.sign(
             { userId: result.id },
             process.env.JWT_SECRET,
